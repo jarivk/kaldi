@@ -101,6 +101,7 @@ bool LatticeFasterDecoderTpl<FST, Token>::Decode(DecodableInterface *decodable) 
 template <typename FST, typename Token>
 bool LatticeFasterDecoderTpl<FST, Token>::GetBestPath(Lattice *olat,
                                        bool use_final_probs) const {
+  std::cout<<"yeah"<<std::endl;
   Lattice raw_lat;
   GetRawLattice(&raw_lat, use_final_probs);
   ShortestPath(raw_lat, olat);

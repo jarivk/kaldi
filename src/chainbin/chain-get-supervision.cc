@@ -22,7 +22,6 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "chain/chain-supervision.h"
-#include "tree/context-dep.h"
 
 namespace kaldi {
 namespace chain {

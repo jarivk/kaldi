@@ -278,8 +278,8 @@ double BasisFmllrEstimate::ComputeTransform(
   }
   KALDI_ASSERT(dim_ == spk_stats.dim_);
   if (spk_stats.beta_ < options.min_count) {
-    KALDI_WARN << "Not updating fMLLR since count is below min-count: "
-               << spk_stats.beta_;
+    //KALDI_WARN << "Not updating fMLLR since count is below min-count: "
+             //  << spk_stats.beta_;
     coefficient->Resize(0);
     return 0.0;
   } else {

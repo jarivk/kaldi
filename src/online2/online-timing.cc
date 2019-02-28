@@ -33,16 +33,16 @@ void OnlineTimingStats::Print(bool online){
         idle_proportion = total_time_waited_ / total_audio_,
         idle_percent = 100.0 * idle_proportion;
 
-    KALDI_LOG << "Timing stats: real-time factor was " << real_time_factor
+    /*KALDI_LOG << "Timing stats: real-time factor was " << real_time_factor
               << " (note: this cannot be less than one.)";
-    KALDI_LOG << "Average delay was " << average_wait << " seconds.";
-    if (idle_percent != 0.0) {
+    KALDI_LOG << "Average delay was " << average_wait << " seconds.";*/
+    //if (idle_percent != 0.0) {
       // If the user was calling SleepUntil instead of WaitUntil, this will
       // always be zero; so don't print it in that case.
-      KALDI_LOG << "Percentage of time spent idling was " << idle_percent;
-    }
-    KALDI_LOG << "Longest delay was " << max_delay_ << " seconds for utterance "
-              << '\'' << max_delay_utt_ << '\'';
+      //KALDI_LOG << "Percentage of time spent idling was " << idle_percent;
+    //}
+    /*KALDI_LOG << "Longest delay was " << max_delay_ << " seconds for utterance "
+              << '\'' << max_delay_utt_ << '\'';*/
   } else {
     // we have processed each utterance in one chunk.
     // the decoding code will have "pretended to wait" (using WaitUntil())
@@ -52,10 +52,10 @@ void OnlineTimingStats::Print(bool online){
     // real-time factor.
     double real_time_factor = (total_time_taken_ - total_time_waited_) /
         total_audio_;
-    KALDI_LOG << "Timing stats: real-time factor for offline decoding was "
+    /*KALDI_LOG << "Timing stats: real-time factor for offline decoding was "
               << real_time_factor << " = "
               << (total_time_taken_ - total_time_waited_) << " seconds "
-              << " / " << total_audio_ << " seconds.";
+              << " / " << total_audio_ << " seconds.";*/
   }
 }
 
@@ -96,6 +96,7 @@ double OnlineTimer::Elapsed() {
 void OnlineTimer::OutputStats(OnlineTimingStats *stats) {
   double processing_time = timer_.Elapsed() + waited_,
       wait_time = processing_time - utterance_length_;
+  KALDI_LOG << "Total time taken " << timer_.Elapsed() << " seconds.";
   if (wait_time < 0.0) {
     // My first though was to make this a KALDI_ERR, but perhaps
     // clocks can go backwards under some weird circumstance, so
