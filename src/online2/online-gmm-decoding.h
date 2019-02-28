@@ -234,6 +234,8 @@ class SingleUtteranceGmmDecoder {
   /// is faster to obtain.
   void FinalizeDecoding();
 
+  void PruneActiveTokens(BaseFloat);
+
   /// Returns true if we already have an fMLLR transform.  The user will
   /// already know this; the call is for convenience.  
   bool HaveTransform() const;
@@ -256,7 +258,7 @@ class SingleUtteranceGmmDecoder {
   /// want an un-scaled lattice, scale it using ScaleLattice() with the inverse
   /// of the acoustic weight.  "end_of_utterance" will be true if you want the
   /// final-probs to be included.
-  void GetLattice(bool rescore_if_needed,
+  void  GetLattice(bool rescore_if_needed,
                   bool end_of_utterance,
                   CompactLattice *clat) const;
 
