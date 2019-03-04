@@ -39,9 +39,6 @@
 
 #include<regex>
 
-#include "/home/sanketkumarm/work/kaldi-alt/kaldi/src/webrtcvad/webrtc/common_audio/vad/include/webrtc_vad.h"
-
-
 namespace kaldi {
 
 //search KW
@@ -53,7 +50,7 @@ int searchKW(string text)
   int count=0;
   while (std::regex_search (text,m,r)) {
     std::cout << m[0] << " ";
-    
+    std::cout << std::endl;
     text = m.suffix().str();
     count++;
   }
@@ -63,6 +60,146 @@ int searchKW(string text)
   else
     return 0;
 }
+
+//fst-project
+/*void fstproject(const std::string rclat, const std::string wclat) {
+  try {
+    using namespace kaldi;
+    using namespace fst;
+    typedef kaldi::int32 int32;
+    typedef kaldi::uint64 uint64;
+    bool project_output = false;
+
+    std::string fsts_rspecifier = rclat,
+        fsts_wspecifier = wclat;
+
+
+    SequentialTableReader<VectorFstHolder> fst_reader(fsts_rspecifier);
+    TableWriter<VectorFstHolder> fst_writer(fsts_wspecifier);
+
+    int32 n_done = 0;
+    for (; !fst_reader.Done(); fst_reader.Next()) {
+      std::string key = fst_reader.Key();
+      VectorFst<StdArc> fst(fst_reader.Value());
+
+      Project(&fst, project_output ? PROJECT_OUTPUT : PROJECT_INPUT);
+
+      fst_writer.Write(key, fst);
+      n_done++;
+    }
+
+    //KALDI_LOG << "Projected " << n_done << " FSTs";
+  } catch(const std::exception &e) {
+    std::cerr << e.what();
+  }
+}*/
+
+
+
+//Kaldi rescore
+/*void rescore(const std::string rclat,const std::string lm, const std::string wclat) {
+  try {
+    using namespace kaldi;
+    typedef kaldi::int32 int32;
+    typedef kaldi::int64 int64;
+    using fst::SymbolTable;
+    using fst::VectorFst;
+    using fst::StdArc;
+    using fst::ReadFstKaldi;
+    BaseFloat lm_scale = 1.0;
+    int32 num_states_cache = 50000;
+
+    std::string lats_rspecifier = rclat,
+        fst_rxfilename = lm,
+        lats_wspecifier = wclat;
+
+    VectorFst<StdArc> *std_lm_fst = ReadFstKaldi(fst_rxfilename);
+    if (std_lm_fst->Properties(fst::kILabelSorted, true) == 0) {
+      // Make sure LM is sorted on ilabel.
+      fst::ILabelCompare<StdArc> ilabel_comp;
+      fst::ArcSort(std_lm_fst, ilabel_comp);
+    }
+
+    // mapped_fst is the LM fst interpreted using the LatticeWeight semiring,
+    // with all the cost on the first member of the pair (since it's a graph
+    // weight).
+    fst::CacheOptions cache_opts(true, num_states_cache);
+    fst::MapFstOptions mapfst_opts(cache_opts);
+    fst::StdToLatticeMapper<BaseFloat> mapper;
+    fst::MapFst<StdArc, LatticeArc, fst::StdToLatticeMapper<BaseFloat> >
+        lm_fst(*std_lm_fst, mapper, mapfst_opts);
+    delete std_lm_fst;
+
+    // The next fifteen or so lines are a kind of optimization and
+    // can be ignored if you just want to understand what is going on.
+    // Change the options for TableCompose to match the input
+    // (because it's the arcs of the LM FST we want to do lookup
+    // on).
+    fst::TableComposeOptions compose_opts(fst::TableMatcherOptions(),
+                                          true, fst::SEQUENCE_FILTER,
+                                          fst::MATCH_INPUT);
+
+    // The following is an optimization for the TableCompose
+    // composition: it stores certain tables that enable fast
+    // lookup of arcs during composition.
+    fst::TableComposeCache<fst::Fst<LatticeArc> > lm_compose_cache(compose_opts);
+
+    // Read as regular lattice-- this is the form we need it in for efficient
+    // composition and determinization.
+    SequentialLatticeReader lattice_reader(lats_rspecifier);
+
+    // Write as compact lattice.
+    CompactLatticeWriter compact_lattice_writer(lats_wspecifier);
+
+    int32 n_done = 0, n_fail = 0;
+
+    for (; !lattice_reader.Done(); lattice_reader.Next()) {
+      std::string key = lattice_reader.Key();
+      Lattice lat = lattice_reader.Value();
+      lattice_reader.FreeCurrent();
+      if (lm_scale != 0.0) {
+        // Only need to modify it if LM scale nonzero.
+        // Before composing with the LM FST, we scale the lattice weights
+        // by the inverse of "lm_scale".  We'll later scale by "lm_scale".
+        // We do it this way so we can determinize and it will give the
+        // right effect (taking the "best path" through the LM) regardless
+        // of the sign of lm_scale.
+        fst::ScaleLattice(fst::GraphLatticeScale(1.0 / lm_scale), &lat);
+        ArcSort(&lat, fst::OLabelCompare<LatticeArc>());
+
+        Lattice composed_lat;
+        // Could just do, more simply: Compose(lat, lm_fst, &composed_lat);
+        // and not have lm_compose_cache at all.
+        // The command below is faster, though; it's constant not
+        // logarithmic in vocab size.
+        TableCompose(lat, lm_fst, &composed_lat, &lm_compose_cache);
+
+        Invert(&composed_lat); // make it so word labels are on the input.
+        CompactLattice determinized_lat;
+        DeterminizeLattice(composed_lat, &determinized_lat);
+        fst::ScaleLattice(fst::GraphLatticeScale(lm_scale), &determinized_lat);
+        if (determinized_lat.Start() == fst::kNoStateId) {
+          KALDI_WARN << "Empty lattice for utterance " << key << " (incompatible LM?)";
+          n_fail++;
+        } else {
+          compact_lattice_writer.Write(key, determinized_lat);
+          n_done++;
+        }
+      } else {
+        // zero scale so nothing to do.
+        n_done++;
+        CompactLattice compact_lat;
+        ConvertLattice(lat, &compact_lat);
+        compact_lattice_writer.Write(key, compact_lat);
+      }
+    }
+
+    //KALDI_LOG << "Done " << n_done << " lattices, failed for " << n_fail;
+   
+  } catch(const std::exception &e) {
+    std::cerr << e.what();
+  }
+}*/
 
 
 //add lattice scale
@@ -77,7 +214,7 @@ void LatScale(const std::string rclat,const std::string wclat)
     using fst::StdArc;
     bool write_compact = true;
     BaseFloat acoustic_scale = 1.0;
-    BaseFloat inv_acoustic_scale = 7.0;
+    BaseFloat inv_acoustic_scale = 17.0;
     BaseFloat lm_scale = 1.0;
     BaseFloat acoustic2lm_scale = 0.0;
     BaseFloat lm2acoustic_scale = 0.0;
@@ -128,7 +265,6 @@ void LatScale(const std::string rclat,const std::string wclat)
     std::cerr << e.what();
   }
 }
-
 //add penalty
 void LatPenalty(const std::string rclat, const std::string wclat)
 {
@@ -137,7 +273,7 @@ void LatPenalty(const std::string rclat, const std::string wclat)
   try {
 
 
-    BaseFloat word_ins_penalty = 0.5;
+    BaseFloat word_ins_penalty = 0.5882;
 
     std::string lats_rspecifier = rclat,
         lats_wspecifier = wclat;
@@ -161,7 +297,7 @@ void LatPenalty(const std::string rclat, const std::string wclat)
 }
 
 //find best path
-string LatBestPath(const std::string rclat, const std::string wclat, std::string word_syms_filename, const std::string wali)
+string LatBestPath(const std::string rclat, const std::string wclat, std::string word_syms_filename)
 {
 
   try {
@@ -173,12 +309,12 @@ string LatBestPath(const std::string rclat, const std::string wclat, std::string
     using fst::StdArc;
     std::string transcript="";
 
-    BaseFloat acoustic_scale = 0.142;
+    BaseFloat acoustic_scale = 0.5882;
     BaseFloat lm_scale = 1.0;
 
     std::string lats_rspecifier = rclat,
         transcriptions_wspecifier = wclat,
-        alignments_wspecifier = wali;
+        alignments_wspecifier = "";
 
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
 
@@ -250,126 +386,6 @@ string LatBestPath(const std::string rclat, const std::string wclat, std::string
 }
 }
 
-void LatBest_1_Path(const std::string rclat, const std::string wclat)
-{
-  try {
-    using namespace kaldi;
-    typedef kaldi::int32 int32;
-    typedef kaldi::int64 int64;
-    using fst::VectorFst;
-    using fst::StdArc;
-
-    //Compute best path through lattices and write out as FSTs
-    //Note: differs from lattice-nbest with --n=1 because we won't
-    //append -1 to the utterance-ids.  Differs from lattice-best-path
-    //because output is FST
-    //e.g.: lattice-1best --acoustic-scale=0.1 ark:1.lats ark:1best.lats
- 
-    BaseFloat acoustic_scale = 0.142;
-    BaseFloat lm_scale = 1.0;
-    BaseFloat word_ins_penalty = 0.0;
-    
-
-    std::string lats_rspecifier = rclat,
-        lats_wspecifier = wclat;
-
-    SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    
-    // Write as compact lattice.
-    CompactLatticeWriter compact_1best_writer(lats_wspecifier); 
-
-    int32 n_done = 0, n_err = 0;
-
-    /*if (acoustic_scale == 0.0 || lm_scale == 0.0)
-      KALDI_ERR << "Do not use exactly zero acoustic or LM scale (cannot be inverted)";*/
-    for (; !clat_reader.Done(); clat_reader.Next()) {
-      std::string key = clat_reader.Key();
-      CompactLattice clat = clat_reader.Value();
-      clat_reader.FreeCurrent();
-      fst::ScaleLattice(fst::LatticeScale(lm_scale, acoustic_scale), &clat);
-      if (word_ins_penalty > 0.0) {
-        AddWordInsPenToCompactLattice(word_ins_penalty, &clat);
-      }
-
-      CompactLattice best_path;
-      CompactLatticeShortestPath(clat, &best_path);
-      
-      if (best_path.Start() == fst::kNoStateId) {
-        KALDI_WARN << "Possibly empty lattice for utterance-id " << key
-                   << "(no output)";
-        n_err++;
-      } else {
-        fst::ScaleLattice(fst::LatticeScale(1.0 / lm_scale, 1.0/acoustic_scale),
-                          &best_path);
-        if (word_ins_penalty > 0.0) {
-          AddWordInsPenToCompactLattice(word_ins_penalty, &clat);
-        }
-        compact_1best_writer.Write(key, best_path);
-        n_done++;
-      }
-    }
-    /*KALDI_LOG << "Done converting " << n_done << " to best path, "
-              << n_err << " had errors.";*/
-  } catch(const std::exception &e) {
-    std::cerr << e.what();
-  }
-}
-
-
-void lattice_to_fst(const std::string rclat, const std::string wclat)
-{
-  try {
-    using namespace kaldi;
-    typedef kaldi::int32 int32;
-    typedef kaldi::int64 int64;
-    using fst::SymbolTable;
-    using fst::VectorFst;
-    using fst::StdArc;
-    using std::vector;
-    BaseFloat acoustic_scale = 0.142;
-    BaseFloat lm_scale = 1.0;
-    bool rm_eps = true;
-
-    vector<vector<double> > scale = fst::LatticeScale(lm_scale, acoustic_scale);
-    
-    std::string lats_rspecifier = rclat,
-        fsts_wspecifier = wclat;
-    
-    SequentialCompactLatticeReader lattice_reader(lats_rspecifier);
-    TableWriter<fst::VectorFstHolder> fst_writer(fsts_wspecifier);
-    
-    int32 n_done = 0; // there is no failure mode, barring a crash.
-    
-    for (; !lattice_reader.Done(); lattice_reader.Next()) {
-      std::string key = lattice_reader.Key();
-      CompactLattice clat = lattice_reader.Value();
-      lattice_reader.FreeCurrent();
-      ScaleLattice(scale, &clat); // typically scales to zero.
-      RemoveAlignmentsFromCompactLattice(&clat); // remove the alignments...
-      fst::VectorFst<StdArc> fst;
-      {
-        Lattice lat;
-        ConvertLattice(clat, &lat); // convert to non-compact form.. won't introduce
-        // extra states because already removed alignments.
-        ConvertLattice(lat, &fst); // this adds up the (lm,acoustic) costs to get
-        // the normal (tropical) costs.
-        Project(&fst, fst::PROJECT_OUTPUT); // Because in the standard Lattice format,
-        // the words are on the output, and we want the word labels.
-      }
-      if (rm_eps) RemoveEpsLocal(&fst);
-      
-      fst_writer.Write(key, fst);
-      n_done++;
-    }
-  } catch(const std::exception &e) {
-    std::cerr << e.what();
-  }
-
-}
-
-
-
-
 bool OpenAudioDevice(const char *devicename, snd_pcm_t **handle, snd_pcm_stream_t streamType, int channels, int rate, int flags)
 {
     int rc;
@@ -433,10 +449,8 @@ bool StopAudioDevice(snd_pcm_t **handle)
     return true;
 }
 
-int main(int argc, char *argv[]) 
-{
-  try 
-  {
+int main(int argc, char *argv[]) {
+  try {
 
     using namespace kaldi;
     using namespace fst;
@@ -463,7 +477,7 @@ int main(int argc, char *argv[])
     OnlineFeaturePipelineCommandLineConfig feature_cmdline_config;
     OnlineGmmDecodingConfig decode_config;
 
-    BaseFloat chunk_length_secs = 0.02;
+    BaseFloat chunk_length_secs = 0.05;
     bool do_endpointing = false;
     std::string use_gpu = "no";
 
@@ -482,8 +496,7 @@ int main(int argc, char *argv[])
 
     po.Read(argc, argv);
 
-    if (po.NumArgs() != 4) 
-    {
+    if (po.NumArgs() != 4) {
       po.PrintUsage();
       return 1;
     }
@@ -514,10 +527,8 @@ int main(int argc, char *argv[])
     SequentialTokenVectorReader spk2utt_reader(spk2utt_rspecifier);
     RandomAccessTableReader<WaveHolder> wav_reader(wav_rspecifier);
 
-    if (capture_device != "") 
-    {
-        if (OpenAudioDevice(capture_device.c_str(), &inhandle, SND_PCM_STREAM_CAPTURE, 1, 16000, 0) == false) 
-        {
+    if (capture_device != "") {
+        if (OpenAudioDevice(capture_device.c_str(), &inhandle, SND_PCM_STREAM_CAPTURE, 1, 16000, 0) == false) {
             KALDI_ERR << "Could not open capture PCM audio "
                   << capture_device;
             return 1;
@@ -529,17 +540,10 @@ int main(int argc, char *argv[])
     int count=0;
     
     OnlineGmmAdaptationState adaptation_state;
-    VadInst *vad=WebRtcVad_Create();
-    WebRtcVad_Init(vad);
-    WebRtcVad_set_mode(vad, 1);
-    
-    //const int16_t * temp = sample.data();
-    while(capture_device != "") 
-    {
+    while(capture_device != "") {
       string utt="uttr1";
       cout<<"==============================wait for next utterance "<<++count<<"==============================\n";
       CompactLatticeWriter clat_writer("ark:lat_in");
-      CompactLatticeWriter clat_writer_partial("ark:lat_partial");
 
       SingleUtteranceGmmDecoder decoder(decode_config,
                                         gmm_models,
@@ -554,15 +558,9 @@ int main(int argc, char *argv[])
       int32 chunk_length = int32(samp_freq * chunk_length_secs);
       if (chunk_length == 0) chunk_length = 1;
       int cn=0;
-      int flag1 = 0,flag0 = 0;
-      int32 j=0;
-      int32 buffer_length = chunk_length*10;
-      Vector<BaseFloat> buffer(buffer_length, kSetZero);
-      int isValid = 1;
-      while(1)
-      {
+      while(1){
         //cout<<"====================speak start "<<++cn<<"====================\n";
-        //cout<<"===========================>> "<<j<<endl;
+        //int32 num_samp;
         int16_t samples[chunk_length];
         Vector<BaseFloat> wave_part(chunk_length, kSetZero);
         int rc;
@@ -573,114 +571,22 @@ int main(int argc, char *argv[])
             break;
           }
         }
-        //check voice activity
-        int isActive = WebRtcVad_Process(vad, 16000, samples, 320);
-        //cout<<isActive<<endl;
-        //check contiguous 10 frames for nonsilence, if silence reset everything
-        if(isActive && flag1<10)
-        {
-          //cout<<"here1"<<endl;
-          flag0 = 0;
-          flag1++;
-          //store everything untill silence
-          for (int32 i= 0; i < chunk_length; ++i,++j) 
-          {
-            buffer(j) = samples[i];
-          }
-          //cout<<j<<endl;
-          continue;
-        }
-        else if(!isActive && flag1<10) //
-        {
-          //cout<<"here2"<<endl;
-          flag0++;
-          //cout<<"reset1"<<endl;
-          flag1 = 0;
-          j = 0;
-          buffer.SetZero();
-          continue;
-        }
-        else if(!isActive)
-        {
-          flag0++;
-          //cout<<flag0<<endl;
-        }
-        //else if(isActive)
-          //flag0 = 0;
-        if(flag1==10)//not silence send everything from buffer for decoding
-        { 
-          for(int32 i=0;i<buffer_length;i+=chunk_length)
-          {
-            for(int32 k=0;k<chunk_length;k++)
-            {
-              wave_part(k)=buffer(i+k);
-            }
-            decoder.FeaturePipeline().AcceptWaveform(samp_freq, wave_part);
-            decoder.AdvanceDecoding();
-            if (do_endpointing && decoder.EndpointDetected(endpoint_config)) 
-            {
-              cout<<"===================detected end of speech small====================\n";
-              break;
-            }
-          }
-          buffer.SetZero();
-          j = 0;
-          flag1++;
-          flag0 = 0;
-          continue;
-        }
-        //afterthat normal decoding
-        for (uint32 i = 0; i < chunk_length; ++i) 
-        {
+        for (uint32 i = 0; i < chunk_length; ++i) {
           wave_part(i) = samples[i];
         }
         decoder.FeaturePipeline().AcceptWaveform(samp_freq, wave_part);
         decoder.AdvanceDecoding();
 
-        //cout<<"f0: "<<flag0<<"  flag1: "<<flag1<<endl;
-        
-        if (do_endpointing && decoder.EndpointDetected(endpoint_config)) 
-        {
-          //decoder.FeaturePipeline().InputFinished();
-          cout<<"f0: "<<flag0<<"flag1: "<<flag1<<endl;
-          //if((flag1*4)<flag0)
-            //isValid = 0;
+        if (do_endpointing && decoder.EndpointDetected(endpoint_config)) {
           cout<<"===================detected end of speech====================\n";
           break;
         }
-        else if(flag0>100 && (2*flag1)<flag0)
-        {
-          //isValid = 0;
-          cout<<"f00: "<<flag0<<"flag11: "<<flag1<<endl;
-          cout<<"exiting"<<endl;
-          break;
-        }
-        /*else
-        {
-          //decoder.PruneActiveTokens(1.5);
-          CompactLattice clat_partial;
-          decoder.GetLattice(true, true, &clat_partial);
-          clat_writer_partial.Write(utt, clat_partial);
-          //decoder.PruneActiveTokens(1.5);
-          //BestPathEnd(bool true,
-                 //              BaseFloat *final_cost = NULL)
-          LatScale("ark:lat_partial","ark:lat_scale_partial");
-          LatPenalty("ark:lat_scale_partial","ark:lat_pen_partial");
-          //LatBest_1_Path("ark:lat_pen_partial","ark:one-best.lat");
-          string transcript_partial=LatBestPath("ark:lat_pen_partial","ark,t:test.tra", word_syms_rxfilename,"ark:partial.ali");
-          cout<<"partial: "<<transcript_partial<<endl;
-          //Lattice partial_best;
-          //decoder.GetBestPath(true,&partial_best);
-          //lattice_to_fst("ark:one_best","ark,t:one_best.tra");
-          //system("cat one_best.tra");
-
-        }*/
       }
       decoder.FeaturePipeline().InputFinished();
       decoder.FinalizeDecoding();
 
       bool end_of_utterance = true;
-      decoder.EstimateFmllr(end_of_utterance);
+      //decoder.EstimateFmllr(end_of_utterance);
       bool rescore_if_needed = true;
       CompactLattice clat;
       decoder.GetLattice(rescore_if_needed, end_of_utterance, &clat);
@@ -692,37 +598,35 @@ int main(int argc, char *argv[])
       }
       clat_writer.Write(utt, clat);
 
+
+      //string oldlmcommand="fstproject --project_output=true G1.fst |";
+      //string newlmcommand="fstproject --project_output=true G2.fst |";
+
+      //cout<<"============="<<oldlmcommand<<endl;
+
+      //rescore("ark:lat_in","fstproject --project_output=true G1.fst |","ark:lat_res");
+      //rescore("ark:lat_res","fstproject --project_output=true G2.fst |","ark:lat_res_new");
+
       LatScale("ark:lat_in","ark:lat_scale");
 
       LatPenalty("ark:lat_scale","ark:lat_pen");
-      if(!isValid)
-      {
-        cout<<"last"<<endl;
-        continue;
-      }
-      //LatBest_1_Path("ark:lat_pen","ark,t:one-best.tra");
-      string transcript=LatBestPath("ark:lat_pen",clat_wspecifier, word_syms_rxfilename,"ark:best.ali");
+      string transcript=LatBestPath("ark:lat_pen",clat_wspecifier, word_syms_rxfilename);
       cout<<"Transcript: "<< transcript<< endl;
-      cout<<"key words:  ";
+      cout<<"key words:"<<endl;
       if(!searchKW(transcript))
         cout<<"No keyword found"<<endl;
-      //system("pwd");
-      system("../../../src/bin/ali-to-phones exp/custom_model_460_online/final.mdl ark:best.ali ark,t:best");
-      system("less best | utils/int2sym.pl -f 2- data/lang_3g_command/phones.txt");
       //remove("lat_in");
       //remove("lat_scale");
       //remove("lat_pen");
-      //remove("one-best.tra");
     }
     if (capture_device != "")
         StopAudioDevice(&inhandle);
-    //delete decode_fst;
-    //delete word_syms; // will delete if non-NULL.
+    delete decode_fst;
+    delete word_syms; // will delete if non-NULL.
     return (num_done != 0 ? 0 : 1);
   } 
   catch(const std::exception& e) {
     std::cerr << e.what();
-    std::cout<<"bye\n";
     return -1;
   }
 } // main()

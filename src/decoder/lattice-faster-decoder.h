@@ -131,12 +131,12 @@ struct StdToken {
   // to keep it in a good numerical range).
   BaseFloat tot_cost;
 
-  // exta_cost is >= 0.  After calling PruneForwardLinks, this equals the
-  // minimum difference between the cost of the best path that this link is a
-  // part of, and the cost of the absolute best path, under the assumption that
-  // any of the currently active states at the decoding front may eventually
-  // succeed (e.g. if you were to take the currently active states one by one
-  // and compute this difference, and then take the minimum).
+  // exta_cost is >= 0.  After calling PruneForwardLinks, this equals
+  // the minimum difference between the cost of the best path, and the cost of
+  // this is on, and the cost of the absolute best path, under the assumption
+  // that any of the currently active states at the decoding front may
+  // eventually succeed (e.g. if you were to take the currently active states
+  // one by one and compute this difference, and then take the minimum).
   BaseFloat extra_cost;
 
   // 'links' is the head of singly-linked list of ForwardLinks, which is what we
@@ -327,6 +327,19 @@ class LatticeFasterDecoderTpl {
   /// Used to be called PruneActiveTokensFinal().
   void FinalizeDecoding();
 
+
+
+   // Go backwards through still-alive tokens, pruning them if the
+  // forward+backward cost is more than lat_beam away from the best path.  It's
+  // possible to prove that this is "correct" in the sense that we won't lose
+  // anything outside of lat_beam, regardless of what happens in the future.
+  // delta controls when it considers a cost to have changed enough to continue
+  // going backward and propagating the change.  larger delta -> will recurse
+  // less far.
+  void PruneActiveTokens(BaseFloat delta);
+
+
+
   /// FinalRelativeCost() serves the same purpose as ReachedFinal(), but gives
   /// more information.  It returns the difference between the best (final-cost
   /// plus cost) of any token on the final frame, and the best cost of any token
@@ -436,7 +449,7 @@ class LatticeFasterDecoderTpl {
   // delta controls when it considers a cost to have changed enough to continue
   // going backward and propagating the change.  larger delta -> will recurse
   // less far.
-  void PruneActiveTokens(BaseFloat delta);
+  //void PruneActiveTokens(BaseFloat delta);
 
   /// Gets the weight cutoff.  Also counts the active tokens.
   BaseFloat GetCutoff(Elem *list_head, size_t *tok_count,

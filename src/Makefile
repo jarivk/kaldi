@@ -9,13 +9,13 @@ SUBDIRS = base matrix util feat tree gmm transform \
           fstext hmm lm decoder lat kws cudamatrix nnet \
           bin fstbin gmmbin fgmmbin featbin \
           nnetbin latbin sgmm2 sgmm2bin nnet2 nnet3 rnnlm chain nnet3bin nnet2bin kwsbin \
-          ivector ivectorbin online2 online2bin lmbin chainbin rnnlmbin
+          ivector ivectorbin online2 online2bin lmbin chainbin rnnlmbin webrtcvad onlinedecoder onlinedecoderfile
 
 MEMTESTDIRS = base matrix util feat tree gmm transform \
           fstext hmm lm decoder lat nnet kws chain \
           bin fstbin gmmbin fgmmbin featbin \
           nnetbin latbin sgmm2 nnet2 nnet3 rnnlm nnet2bin nnet3bin sgmm2bin kwsbin \
-          ivector ivectorbin online2 online2bin lmbin
+          ivector ivectorbin online2 online2bin lmbin 
 
 CUDAMEMTESTDIR = cudamatrix
 
@@ -31,8 +31,14 @@ include kaldi.mk
 
 # Reset the default goal, so that the all target will become default
 .DEFAULT_GOAL :=
-all: $(SUBDIRS) matrix/test
+all:
+	$(MAKE) checkversion
+	$(MAKE) kaldi.mk
+	$(MAKE) mklibdir
+	$(MAKE) subdirs
 	-echo Done
+
+subdirs: $(SUBDIRS)
 
 mklibdir:
 	test -d $(KALDILIBDIR) || mkdir $(KALDILIBDIR)
@@ -132,11 +138,11 @@ ext_depend: check_portaudio
 
 
 .PHONY: $(SUBDIRS)
-$(SUBDIRS) : checkversion kaldi.mk mklibdir
+$(SUBDIRS) : mklibdir
 	$(MAKE) -C $@
 
 .PHONY: $(EXT_SUBDIRS)
-$(EXT_SUBDIRS) : checkversion kaldi.mk mklibdir ext_depend
+$(EXT_SUBDIRS) : mklibdir ext_depend
 	$(MAKE) -C $@
 
 

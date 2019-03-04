@@ -106,6 +106,11 @@ void SingleUtteranceGmmDecoder::FinalizeDecoding() {
   decoder_.FinalizeDecoding();
 }
 
+
+void SingleUtteranceGmmDecoder::PruneActiveTokens(BaseFloat f){
+  decoder_.PruneActiveTokens(f);
+}
+
 // gets Gaussian posteriors for purposes of fMLLR estimation.
 // We exclude the silence phones from the Gaussian posteriors.
 bool SingleUtteranceGmmDecoder::GetGaussianPosteriors(bool end_of_utterance,

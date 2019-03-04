@@ -30,10 +30,12 @@ static bool RuleActivated(const OnlineEndpointRule &rule,
                           BaseFloat utterance_length) {
   bool contains_nonsilence = (utterance_length > trailing_silence);
 
-  bool ans = (contains_nonsilence || !rule.must_contain_nonsilence) &&
+  /*bool ans = (contains_nonsilence || !rule.must_contain_nonsilence) &&
       trailing_silence >= rule.min_trailing_silence &&
       relative_cost <= rule.max_relative_cost &&
-      utterance_length >= rule.min_utterance_length;
+      utterance_length >= rule.min_utterance_length;*/
+  bool ans = ((contains_nonsilence || !rule.must_contain_nonsilence) &&
+      trailing_silence > rule.min_trailing_silence);
   if (ans) {
     KALDI_VLOG(2) << "Endpointing rule " << rule_name << " activated: "
                   << (contains_nonsilence ? "true" : "false" ) << ','
@@ -49,26 +51,46 @@ bool EndpointDetected(const OnlineEndpointConfig &config,
                       BaseFloat frame_shift_in_seconds,
                       BaseFloat final_relative_cost) {
   KALDI_ASSERT(num_frames_decoded >= trailing_silence_frames);
+  int rule_active;
 
   BaseFloat utterance_length = num_frames_decoded * frame_shift_in_seconds,
       trailing_silence = trailing_silence_frames * frame_shift_in_seconds;
 
+#if 0
   if (RuleActivated(config.rule1, "rule1",
-                    trailing_silence, final_relative_cost, utterance_length))
-    return true;
+                    trailing_silence, final_relative_cost, utterance_length)) {
+    rule_active = 1;
+    goto return_true;
+  }
+#endif
   if (RuleActivated(config.rule2, "rule2",
-                    trailing_silence, final_relative_cost, utterance_length))
-    return true;
+                    trailing_silence, final_relative_cost, utterance_length)) {
+    rule_active = 2;
+    goto return_true;
+  }
+#if 0
   if (RuleActivated(config.rule3, "rule3",
-                    trailing_silence, final_relative_cost, utterance_length))
-    return true;
+                    trailing_silence, final_relative_cost, utterance_length)) {
+    rule_active = 3;
+    goto return_true;
+  }
   if (RuleActivated(config.rule4, "rule4",
-                    trailing_silence, final_relative_cost, utterance_length))
-    return true;
+                    trailing_silence, final_relative_cost, utterance_length)) {
+    rule_active = 4;
+    goto return_true;
+  }
   if (RuleActivated(config.rule5, "rule5",
-                    trailing_silence, final_relative_cost, utterance_length))
-    return true;
+                    trailing_silence, final_relative_cost, utterance_length)) {
+    rule_active = 5;
+    goto return_true;
+  }
+#endif
   return false;
+
+return_true:
+  KALDI_LOG << "Rule active " << rule_active << " utterance_length " << utterance_length
+   << " trailing_silence " << trailing_silence << " final_relative_cost " << final_relative_cost << " utterance_length " << utterance_length;
+  return true;
 }
 
 template <typename FST>
@@ -80,6 +102,7 @@ int32 TrailingSilenceLength(const TransitionModel &tmodel,
     KALDI_ERR << "Bad --silence-phones option in endpointing config: "
               << silence_phones_str;
   std::sort(silence_phones.begin(), silence_phones.end());
+  //std::cout<<"========================="<<silence_phones_str<<std::endl;
   KALDI_ASSERT(IsSortedAndUniq(silence_phones) &&
                "Duplicates in --silence-phones option in endpointing config");
   KALDI_ASSERT(!silence_phones.empty() &&
