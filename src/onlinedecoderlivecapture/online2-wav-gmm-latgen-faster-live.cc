@@ -47,6 +47,7 @@ namespace kaldi {
 //search KW
 int searchKW(string text)
 {
+  //change the regex according to your need
   string pattern ="(\\b\\s*MENU\\s*\\b|\\b\\s*SHOW MAP\\s*\\b|\\b\\s*BECOME DRIVER\\s*\\b|\\b\\s*BOOST\\s*\\b|\\b\\s*BUILD\\s*\\b|\\b\\s*BUILD MEDIVAC\\s*\\b|\\b\\s*BUILD MINE\\s*\\b|\\b\\s*BUILD THREE DROPSHIPS\\s*\\b|\\b\\s*CHANGE CAMERA\\s*\\b|\\b\\s*CHANGE MODE\\s*\\b|\\b\\s*CROUCH\\s*\\b|\\b\\s*DRIVE MOTORBIKE\\s*\\b|\\b\\s*DRIVE VEHICLE\\s*\\b|\\b\\s*ENTER CAR\\s*\\b|\\b\\s*EQUIP MELEE\\s*\\b|\\b\\s*EXPLORE\\s*\\b|\\b\\s*EXTRA SUPPLIES\\s*\\b|\\b\\s*FIRST AID KIT\\s*\\b|\\b\\s*FOUND CITY\\s*\\b|\\b\\s*GET ARMY\\s*\\b|\\b\\s*GET BATTLE UNITS\\s*\\b|\\b\\s*GET IDLE WORKER\\s*\\b|\\b\\s*GRENADE\\s*\\b|\\b\\s*JUMP\\s*\\b|\\b\\s*MAKE BARRACKS\\s*\\b|\\b\\s*MOVE TO PASSENGER\\s*\\b|\\b\\s*NEXT TURN\\s*\\b|\\b\\s*NITRO\\s*\\b|\\b\\s*OPEN CELLPHONE\\s*\\b|\\b\\s*OPEN CHAT\\s*\\b|\\b\\s*OPEN MENU\\s*\\b|\\b\\s*OPTIONS\\s*\\b|\\b\\s*PRIMARY WEAPON\\s*\\b|\\b\\s*PRONE\\s*\\b|\\b\\s*QUICK SAVE\\s*\\b|\\b\\s*RECORD\\s*\\b|\\b\\s*RELOAD\\s*\\b|\\b\\s*REMOVE FOREST\\s*\\b|\\b\\s*SCREENSHOT\\s*\\b|\\b\\s*SET UP ARTILLERY\\s*\\b|\\b\\s*SHOW DIPLOMACY\\s*\\b|\\b\\s*SHOW ECONOMY\\s*\\b|\\b\\s*SHOW HUD\\s*\\b|\\b\\s*SHOW INVENTORY\\s*\\b|\\b\\s*SHOW MILITARY\\s*\\b|\\b\\s*STEALTH MODE\\s*\\b|\\b\\s*SWITCH TO HANDGUN\\s*\\b|\\b\\s*SWITCH TO WEAPON ONE\\s*\\b|\\b\\s*TAKE JEEP\\s*\\b|\\b\\s*TAKE PICTURE\\s*\\b|\\b\\s*TECH TREE\\s*\\b|\\b\\s*TIMEOUT\\s*\\b|\\b\\s*WEAPON TWO\\s*\\b)";
   std::smatch m;
   std::regex r(pattern);
@@ -707,8 +708,8 @@ int main(int argc, char *argv[])
       if(!searchKW(transcript))
         cout<<"No keyword found"<<endl;
       //system("pwd");
-      system("../../../src/bin/ali-to-phones exp/custom_model_460_online/final.mdl ark:best.ali ark,t:best");
-      system("less best | utils/int2sym.pl -f 2- data/lang_3g_command/phones.txt");
+      //system("../../../src/bin/ali-to-phones exp/custom_model_460_online/final.mdl ark:best.ali ark,t:best");
+      //system("less best | utils/int2sym.pl -f 2- data/lang_3g_command/phones.txt");
       //remove("lat_in");
       //remove("lat_scale");
       //remove("lat_pen");
