@@ -29,7 +29,6 @@
 #include "fstext/fstext-lib.h"
 #include "fstext/kaldi-fst-io.h"
 
-#include<fstream>
 
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
@@ -48,17 +47,17 @@ namespace kaldi {
 int searchKW(string text)
 {
   //change the regex according to your need
-  string pattern ="(\\b\\s*MENU\\s*\\b|\\b\\s*SHOW MAP\\s*\\b|\\b\\s*BECOME DRIVER\\s*\\b|\\b\\s*BOOST\\s*\\b|\\b\\s*BUILD\\s*\\b|\\b\\s*BUILD MEDIVAC\\s*\\b|\\b\\s*BUILD MINE\\s*\\b|\\b\\s*BUILD THREE DROPSHIPS\\s*\\b|\\b\\s*CHANGE CAMERA\\s*\\b|\\b\\s*CHANGE MODE\\s*\\b|\\b\\s*CROUCH\\s*\\b|\\b\\s*DRIVE MOTORBIKE\\s*\\b|\\b\\s*DRIVE VEHICLE\\s*\\b|\\b\\s*ENTER CAR\\s*\\b|\\b\\s*EQUIP MELEE\\s*\\b|\\b\\s*EXPLORE\\s*\\b|\\b\\s*EXTRA SUPPLIES\\s*\\b|\\b\\s*FIRST AID KIT\\s*\\b|\\b\\s*FOUND CITY\\s*\\b|\\b\\s*GET ARMY\\s*\\b|\\b\\s*GET BATTLE UNITS\\s*\\b|\\b\\s*GET IDLE WORKER\\s*\\b|\\b\\s*GRENADE\\s*\\b|\\b\\s*JUMP\\s*\\b|\\b\\s*MAKE BARRACKS\\s*\\b|\\b\\s*MOVE TO PASSENGER\\s*\\b|\\b\\s*NEXT TURN\\s*\\b|\\b\\s*NITRO\\s*\\b|\\b\\s*OPEN CELLPHONE\\s*\\b|\\b\\s*OPEN CHAT\\s*\\b|\\b\\s*OPEN MENU\\s*\\b|\\b\\s*OPTIONS\\s*\\b|\\b\\s*PRIMARY WEAPON\\s*\\b|\\b\\s*PRONE\\s*\\b|\\b\\s*QUICK SAVE\\s*\\b|\\b\\s*RECORD\\s*\\b|\\b\\s*RELOAD\\s*\\b|\\b\\s*REMOVE FOREST\\s*\\b|\\b\\s*SCREENSHOT\\s*\\b|\\b\\s*SET UP ARTILLERY\\s*\\b|\\b\\s*SHOW DIPLOMACY\\s*\\b|\\b\\s*SHOW ECONOMY\\s*\\b|\\b\\s*SHOW HUD\\s*\\b|\\b\\s*SHOW INVENTORY\\s*\\b|\\b\\s*SHOW MILITARY\\s*\\b|\\b\\s*STEALTH MODE\\s*\\b|\\b\\s*SWITCH TO HANDGUN\\s*\\b|\\b\\s*SWITCH TO WEAPON ONE\\s*\\b|\\b\\s*TAKE JEEP\\s*\\b|\\b\\s*TAKE PICTURE\\s*\\b|\\b\\s*TECH TREE\\s*\\b|\\b\\s*TIMEOUT\\s*\\b|\\b\\s*WEAPON TWO\\s*\\b)";
+  string pattern ="(\\b\\s*MENU\\s*\\b|\\b\\s*SHOW MAP\\s*\\b|\\b\\s*BECOME DRIVER\\s*\\b|\\b\\s*BOOST\\s*\\b|\\b\\s*BUILD MEDIVAC\\s*\\b|\\b\\s*BUILD MINE\\s*\\b|\\b\\s*BUILD THREE DROPSHIPS\\s*\\b|\\b\\s*BUILD\\s*\\b|\\b\\s*CHANGE CAMERA\\s*\\b|\\b\\s*CHANGE MODE\\s*\\b|\\b\\s*CROUCH\\s*\\b|\\b\\s*DRIVE MOTORBIKE\\s*\\b|\\b\\s*DRIVE VEHICLE\\s*\\b|\\b\\s*ENTER CAR\\s*\\b|\\b\\s*EQUIP MELEE\\s*\\b|\\b\\s*EXPLORE\\s*\\b|\\b\\s*EXTRA SUPPLIES\\s*\\b|\\b\\s*FIRST AID KIT\\s*\\b|\\b\\s*FOUND CITY\\s*\\b|\\b\\s*GET ARMY\\s*\\b|\\b\\s*GET BATTLE UNITS\\s*\\b|\\b\\s*GET IDLE WORKER\\s*\\b|\\b\\s*GRENADE\\s*\\b|\\b\\s*JUMP\\s*\\b|\\b\\s*MAKE BARRACKS\\s*\\b|\\b\\s*MOVE TO PASSENGER\\s*\\b|\\b\\s*NEXT TURN\\s*\\b|\\b\\s*NITRO\\s*\\b|\\b\\s*OPEN CELLPHONE\\s*\\b|\\b\\s*OPEN CHAT\\s*\\b|\\b\\s*OPEN MENU\\s*\\b|\\b\\s*OPTIONS\\s*\\b|\\b\\s*PRIMARY WEAPON\\s*\\b|\\b\\s*PRONE\\s*\\b|\\b\\s*QUICK SAVE\\s*\\b|\\b\\s*RECORD\\s*\\b|\\b\\s*RELOAD\\s*\\b|\\b\\s*REMOVE FOREST\\s*\\b|\\b\\s*SCREENSHOT\\s*\\b|\\b\\s*SET UP ARTILLERY\\s*\\b|\\b\\s*SHOW DIPLOMACY\\s*\\b|\\b\\s*SHOW ECONOMY\\s*\\b|\\b\\s*SHOW HUD\\s*\\b|\\b\\s*SHOW INVENTORY\\s*\\b|\\b\\s*SHOW MILITARY\\s*\\b|\\b\\s*STEALTH MODE\\s*\\b|\\b\\s*SWITCH TO HANDGUN\\s*\\b|\\b\\s*SWITCH TO WEAPON ONE\\s*\\b|\\b\\s*TAKE JEEP\\s*\\b|\\b\\s*TAKE PICTURE\\s*\\b|\\b\\s*TECH TREE\\s*\\b|\\b\\s*TIMEOUT\\s*\\b|\\b\\s*WEAPON TWO\\s*\\b)";
   std::smatch m;
   std::regex r(pattern);
   int count=0;
+  
   while (std::regex_search (text,m,r)) {
-    std::cout << m[0] << " ";
-    
+    std::cout << m[0] <<" ";
     text = m.suffix().str();
     count++;
   }
-  std::cout<<count<<std::endl;
+  std::cout<<std::endl;
   if(count>0)
     return 1;
   else
@@ -78,10 +77,10 @@ void LatScale(const std::string rclat,const std::string wclat)
     using fst::StdArc;
     bool write_compact = true;
     BaseFloat acoustic_scale = 1.0;
-    BaseFloat inv_acoustic_scale = 7.0;
+    BaseFloat inv_acoustic_scale = 17.0;
     BaseFloat lm_scale = 1.0;
-    BaseFloat acoustic2lm_scale = 0.0;
-    BaseFloat lm2acoustic_scale = 0.0;
+    BaseFloat acoustic2lm_scale = 17.0;
+    BaseFloat lm2acoustic_scale = 0.0588;
     std::string lats_rspecifier = rclat,
         lats_wspecifier = wclat;
     int32 n_done = 0;
@@ -174,7 +173,8 @@ string LatBestPath(const std::string rclat, const std::string wclat, std::string
     using fst::StdArc;
     std::string transcript="";
 
-    BaseFloat acoustic_scale = 0.142;
+    //BaseFloat acoustic_scale = 0.142;
+    BaseFloat acoustic_scale = 0.0588;
     BaseFloat lm_scale = 1.0;
 
     std::string lats_rspecifier = rclat,
@@ -266,7 +266,8 @@ void LatBest_1_Path(const std::string rclat, const std::string wclat)
     //because output is FST
     //e.g.: lattice-1best --acoustic-scale=0.1 ark:1.lats ark:1best.lats
  
-    BaseFloat acoustic_scale = 0.142;
+    //BaseFloat acoustic_scale = 0.142;
+    BaseFloat acoustic_scale = 0.0588;
     BaseFloat lm_scale = 1.0;
     BaseFloat word_ins_penalty = 0.0;
     
@@ -327,7 +328,8 @@ void lattice_to_fst(const std::string rclat, const std::string wclat)
     using fst::VectorFst;
     using fst::StdArc;
     using std::vector;
-    BaseFloat acoustic_scale = 0.142;
+    //BaseFloat acoustic_scale = 0.142;
+    BaseFloat acoustic_scale = 0.0588;
     BaseFloat lm_scale = 1.0;
     bool rm_eps = true;
 
@@ -376,9 +378,9 @@ bool OpenAudioDevice(const char *devicename, snd_pcm_t **handle, snd_pcm_stream_
     int rc;
     static snd_output_t *log;
 
-    printf("Open device : %s %s channels %d rate %d\n", devicename,
-        streamType == SND_PCM_STREAM_CAPTURE ? "CAPTURE" : "PLAYBACK",
-        channels, rate);
+    //printf("Open device : %s %s channels %d rate %d\n", devicename,
+      //  streamType == SND_PCM_STREAM_CAPTURE ? "CAPTURE" : "PLAYBACK",
+       // channels, rate);
 
     if ((rc = snd_pcm_open(handle, devicename, streamType, flags)) < 0) {
         printf("unable to open pcm device for recording: %s\n",snd_strerror(rc));
@@ -436,6 +438,7 @@ bool StopAudioDevice(snd_pcm_t **handle)
 
 int main(int argc, char *argv[]) 
 {
+  
   try 
   {
 
@@ -488,7 +491,7 @@ int main(int argc, char *argv[])
       po.PrintUsage();
       return 1;
     }
-
+    
     std::string fst_rxfilename = po.GetArg(1),
         spk2utt_rspecifier = po.GetArg(2),
         wav_rspecifier = po.GetArg(3),
@@ -538,7 +541,8 @@ int main(int argc, char *argv[])
     while(capture_device != "") 
     {
       string utt="uttr1";
-      cout<<"==============================wait for next utterance "<<++count<<"==============================\n";
+      //system("rm program.txt");
+      //cout<<"==============================wait for next utterance "<<++count<<"==============================\n";
       CompactLatticeWriter clat_writer("ark:lat_in");
       CompactLatticeWriter clat_writer_partial("ark:lat_partial");
 
@@ -620,7 +624,7 @@ int main(int argc, char *argv[])
             decoder.AdvanceDecoding();
             if (do_endpointing && decoder.EndpointDetected(endpoint_config)) 
             {
-              cout<<"===================detected end of speech small====================\n";
+              //cout<<"===================detected end of speech small====================\n";
               break;
             }
           }
@@ -643,39 +647,19 @@ int main(int argc, char *argv[])
         if (do_endpointing && decoder.EndpointDetected(endpoint_config)) 
         {
           //decoder.FeaturePipeline().InputFinished();
-          cout<<"f0: "<<flag0<<"flag1: "<<flag1<<endl;
+          //cout<<"f0: "<<flag0<<"flag1: "<<flag1<<endl;
           //if((flag1*4)<flag0)
             //isValid = 0;
-          cout<<"===================detected end of speech====================\n";
+          //cout<<"===================detected end of speech====================\n";
           break;
         }
         else if(flag0>100 && (2*flag1)<flag0)
         {
-          //isValid = 0;
-          cout<<"f00: "<<flag0<<"flag11: "<<flag1<<endl;
-          cout<<"exiting"<<endl;
+          isValid = 0;
+          //cout<<"f00: "<<flag0<<"flag11: "<<flag1<<endl;
+         // cout<<"exiting"<<endl;
           break;
         }
-        /*else
-        {
-          //decoder.PruneActiveTokens(1.5);
-          CompactLattice clat_partial;
-          decoder.GetLattice(true, true, &clat_partial);
-          clat_writer_partial.Write(utt, clat_partial);
-          //decoder.PruneActiveTokens(1.5);
-          //BestPathEnd(bool true,
-                 //              BaseFloat *final_cost = NULL)
-          LatScale("ark:lat_partial","ark:lat_scale_partial");
-          LatPenalty("ark:lat_scale_partial","ark:lat_pen_partial");
-          //LatBest_1_Path("ark:lat_pen_partial","ark:one-best.lat");
-          string transcript_partial=LatBestPath("ark:lat_pen_partial","ark,t:test.tra", word_syms_rxfilename,"ark:partial.ali");
-          cout<<"partial: "<<transcript_partial<<endl;
-          //Lattice partial_best;
-          //decoder.GetBestPath(true,&partial_best);
-          //lattice_to_fst("ark:one_best","ark,t:one_best.tra");
-          //system("cat one_best.tra");
-
-        }*/
       }
       decoder.FeaturePipeline().InputFinished();
       decoder.FinalizeDecoding();
@@ -696,29 +680,28 @@ int main(int argc, char *argv[])
       LatScale("ark:lat_in","ark:lat_scale");
 
       LatPenalty("ark:lat_scale","ark:lat_pen");
+      ofstream myfile;
       if(!isValid)
       {
-        cout<<"last"<<endl;
+        //cout<<"key words: NA"<<endl;
+	 cout<<"NA"<<endl;
         continue;
       }
       //LatBest_1_Path("ark:lat_pen","ark,t:one-best.tra");
       string transcript=LatBestPath("ark:lat_pen",clat_wspecifier, word_syms_rxfilename,"ark:best.ali");
-      cout<<"Transcript: "<< transcript<< endl;
-      cout<<"key words:  ";
+      //cout<<"Transcript: "<< transcript<< endl;
+            
+      //cout<<"key words: ";
       if(!searchKW(transcript))
-        cout<<"No keyword found"<<endl;
-      //system("pwd");
-      //system("../../../src/bin/ali-to-phones exp/custom_model_460_online/final.mdl ark:best.ali ark,t:best");
-      //system("less best | utils/int2sym.pl -f 2- data/lang_3g_command/phones.txt");
-      //remove("lat_in");
-      //remove("lat_scale");
-      //remove("lat_pen");
-      //remove("one-best.tra");
+      {
+        cout<<"NA"<<endl;
+      }
     }
     if (capture_device != "")
         StopAudioDevice(&inhandle);
     //delete decode_fst;
     //delete word_syms; // will delete if non-NULL.
+    
     return (num_done != 0 ? 0 : 1);
   } 
   catch(const std::exception& e) {
