@@ -29,7 +29,6 @@
 #include "fstext/fstext-lib.h"
 #include "fstext/kaldi-fst-io.h"
 
-#include<fstream>
 
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
@@ -52,19 +51,13 @@ int searchKW(string text)
   std::smatch m;
   std::regex r(pattern);
   int count=0;
-  std::ofstream myfile;
-  //myfile.open ("program.txt");
   
   while (std::regex_search (text,m,r)) {
     std::cout << m[0] <<" ";
-    //myfile << m[0];
     text = m.suffix().str();
     count++;
   }
   std::cout<<std::endl;
-  //myfile << "\n";
-  //myfile.close();
-  //std::cout<<count<<std::endl;
   if(count>0)
     return 1;
   else
@@ -688,28 +681,21 @@ int main(int argc, char *argv[])
 
       LatPenalty("ark:lat_scale","ark:lat_pen");
       ofstream myfile;
-      //myfile.open ("program.txt");
       if(!isValid)
       {
         //cout<<"key words: NA"<<endl;
 	 cout<<"NA"<<endl;
-         //myfile << "NA";
-         //myfile.close();
         continue;
       }
-      //myfile.close();
       //LatBest_1_Path("ark:lat_pen","ark,t:one-best.tra");
       string transcript=LatBestPath("ark:lat_pen",clat_wspecifier, word_syms_rxfilename,"ark:best.ali");
       //cout<<"Transcript: "<< transcript<< endl;
             
       //cout<<"key words: ";
-      //myfile.open ("program.txt");
       if(!searchKW(transcript))
       {
         cout<<"NA"<<endl;
-        //myfile << "NA";
       }
-      //myfile.close();
     }
     if (capture_device != "")
         StopAudioDevice(&inhandle);
