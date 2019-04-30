@@ -39,7 +39,7 @@
 
 #include<regex>
 
-#include "/home/sanketkumarm/work/kaldi-alt/kaldi/src/webrtcvad/webrtc/common_audio/vad/include/webrtc_vad.h"
+#include "webrtcvad/webrtc/common_audio/vad/include/webrtc_vad.h"
 
 
 namespace kaldi {
