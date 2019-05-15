@@ -2,7 +2,7 @@
 data=data
 
 # base url for downloads.
-#dataset
+#dataset librispeech
 data_url=www.openslr.org/resources/12
 #language files 
 lm_url=www.openslr.org/resources/11
@@ -14,6 +14,7 @@ lm_url=www.openslr.org/resources/11
 # download the data.  Note: we're using the 100 hour setup 
 #dev-clean test-clean dev-other test-other is testing data set
 #download train-clean-100
+#If the data is available locally it will not download again make sure path is same 
 local/download_and_untar.sh $data $data_url train-clean-100
 
 # download the LM resources
